@@ -15,11 +15,14 @@ import warnings
 import abc
 import itertools
 import random
+import logging
 
 import six
 import irc.client
 import irc.modes
 from .dict import IRCDict
+
+log = logging.getLogger(__name__)
 
 class ServerSpec(object):
     """
@@ -91,12 +94,14 @@ class ExponentialBackoff(ReconnectStrategy):
         # limit the min interval
         intvl = max(intvl, self.min_interval)
 
+        log.debug("reconnecting in %ss", intvl)
         self.bot.reactor.scheduler.execute_after(intvl, self.check)
         self._check_scheduled = True
 
     def check(self):
         self._check_scheduled = False
         if not self.bot.connection.is_connected():
+            log.debug("attempt to reconnect")
             self.run(self.bot)
             self.bot.jump_server()
 
